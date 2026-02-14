@@ -5,3 +5,4 @@ beautifulsoup4
 reportlab
 python-pptx
 python-dotenv
+gunicorn
