@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ScholarMind — AI-powered multi-language research intelligence platform.">
+    <title>ScholarMind — AI Research Intelligence</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <!-- Background effects -->
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+    <div class="bg-grid"></div>
+    <div class="particles-container" id="particles"></div>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <div class="logo">
+                    <span class="logo-icon">🔬</span>
+                    <h1>ScholarMind</h1>
+                </div>
+                <span class="version-badge">v2.0</span>
+            </div>
+            <div class="header-right">
+                <span class="user-greeting">Hello, <strong>{{ username }}</strong></span>
+                <a href="/logout" class="logout-btn" title="Sign Out">
+                    <span>Sign Out</span>
+                    <span class="logout-icon">→</span>
+                </a>
+            </div>
+        </header>
+        <p class="tagline">AI-Powered Multi-Language Research Intelligence Platform</p>
+
+        <!-- Input Section -->
+        <section class="input-section">
+            <div class="card input-card">
+                <div class="card-header">
+                    <span class="card-icon">📝</span>
+                    <h2>Research Configuration</h2>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-col form-col-grow">
+                        <label for="topic-input" class="input-label">Research Topic</label>
+                        <input type="text" id="topic-input"
+                            placeholder="e.g., Quantum Computing, CRISPR Gene Editing, Edge AI..." autocomplete="off"
+                            spellcheck="false">
+                    </div>
+                </div>
+
+                <div class="form-row form-row-options">
+                    <div class="form-col">
+                        <label for="language-select" class="input-label">Report Language</label>
+                        <div class="select-wrapper">
+                            <select id="language-select">
+                                {% for key, value in languages.items() %}
+                                <option value="{{ key }}" {% if key=='English' %}selected{% endif %}>{{ value }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <span class="select-arrow">▾</span>
+                        </div>
+                    </div>
+
+                    <div class="form-col">
+                        <label for="speech-duration" class="input-label">Speech Duration</label>
+                        <div class="select-wrapper">
+                            <select id="speech-duration">
+                                <option value="5">5 Minutes</option>
+                                <option value="10" selected>10 Minutes</option>
+                                <option value="15">15 Minutes</option>
+                                <option value="20">20 Minutes</option>
+                            </select>
+                            <span class="select-arrow">▾</span>
+                        </div>
+                    </div>
+
+                    <div class="form-col form-col-btn">
+                        <button id="generate-btn" onclick="generateResearch()">
+                            <span class="btn-icon-left">⚡</span>
+                            <span class="btn-text">Generate Research</span>
+                            <span class="btn-icon">→</span>
+                        </button>
+                    </div>
+                </div>
+
+                <p class="input-hint">
+                    Generate a comprehensive research report, PDF, interactive presentation, timed speech script, and
+                    chat with AI about your topic.
+                </p>
+            </div>
+        </section>
+
+        <!-- Loading State -->
+        <section id="loading-section" class="loading-section hidden">
+            <div class="card loading-card">
+                <div class="loader">
+                    <div class="loader-ring"></div>
+                    <div class="loader-ring"></div>
+                    <div class="loader-ring"></div>
+                </div>
+                <h3 class="loading-title">Generating Research Report</h3>
+                <p class="loading-text" id="loading-status">Searching the web for relevant sources...</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div class="loading-steps" id="loading-steps">
+                    <div class="step active" id="step-1"><span class="step-dot"></span> Web Search</div>
+                    <div class="step" id="step-2"><span class="step-dot"></span> Content Extraction</div>
+                    <div class="step" id="step-3"><span class="step-dot"></span> AI Analysis</div>
+                    <div class="step" id="step-4"><span class="step-dot"></span> PDF Generation</div>
+                    <div class="step" id="step-5"><span class="step-dot"></span> Presentation</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Error State -->
+        <section id="error-section" class="error-section hidden">
+            <div class="card error-card">
+                <span class="error-icon">⚠</span>
+                <p id="error-message" class="error-message"></p>
+                <button class="retry-btn" onclick="resetUI()">Try Again</button>
+            </div>
+        </section>
+
+        <!-- Results Section -->
+        <section id="results-section" class="results-section hidden">
+            <!-- Download Bar -->
+            <div class="download-bar">
+                <h2 id="result-topic" class="result-topic"></h2>
+                <div class="result-meta">
+                    <span class="meta-badge" id="result-language"></span>
+                </div>
+                <div class="download-buttons">
+                    <a href="/download/pdf" class="download-btn pdf-btn">
+                        <span class="dl-icon">📄</span>
+                        PDF Report
+                    </a>
+                    <a href="/download/ppt" class="download-btn ppt-btn">
+                        <span class="dl-icon">📊</span>
+                        Presentation
+                    </a>
+                    <button class="download-btn speech-btn" id="speech-generate-btn" onclick="generateSpeech()">
+                        <span class="dl-icon">🎤</span>
+                        <span id="speech-btn-text">Generate Speech</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('report')" id="tab-report">📋 Report</button>
+                <button class="tab-btn" onclick="switchTab('sources')" id="tab-sources">🔗 Sources</button>
+                <button class="tab-btn" onclick="switchTab('speech')" id="tab-speech">🎤 Speech</button>
+                <button class="tab-btn" onclick="switchTab('chat')" id="tab-chat">💬 AI Chat</button>
+            </div>
+
+            <!-- Report Tab -->
+            <div class="card report-card tab-content" id="content-report">
+                <div id="report-content" class="report-content"></div>
+            </div>
+
+            <!-- Sources Tab -->
+            <div class="card sources-card tab-content hidden" id="content-sources">
+                <div class="sources-header">
+                    <h3>📚 Research Sources & References</h3>
+                    <p>All sources used to generate this research report</p>
+                </div>
+                <div id="sources-list" class="sources-list"></div>
+            </div>
+
+            <!-- Speech Tab -->
+            <div class="card speech-card tab-content hidden" id="content-speech">
+                <div class="speech-header">
+                    <h3>🎤 Presentation Speech Script</h3>
+                    <div class="speech-controls">
+                        <p id="speech-info">Generate a timed speech script for your presentation</p>
+                        <!-- TTS Controls -->
+                        <div class="tts-controls hidden" id="tts-controls">
+                            <button class="tts-btn tts-play" id="tts-play-btn" onclick="ttsPlay()" title="Play">
+                                <span id="tts-play-icon">▶</span>
+                            </button>
+                            <button class="tts-btn tts-pause" onclick="ttsPause()" title="Pause">⏸</button>
+                            <button class="tts-btn tts-stop" onclick="ttsStop()" title="Stop">⏹</button>
+                            <div class="tts-rate">
+                                <label>Speed</label>
+                                <input type="range" id="tts-rate" min="0.5" max="2" step="0.1" value="1">
+                                <span id="tts-rate-display">1x</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="speech-content" class="speech-content">
+                    <div class="speech-placeholder">
+                        <span class="speech-placeholder-icon">🎙️</span>
+                        <p>Click "Generate Speech" above to create a timed presentation script</p>
+                    </div>
+                </div>
+                <div id="speech-download-wrap" class="hidden">
+                    <a href="/download/speech" class="download-btn speech-download-btn">
+                        <span class="dl-icon">📥</span>
+                        Download Speech Script
+                    </a>
+                </div>
+            </div>
+
+            <!-- Chat Tab -->
+            <div class="card chat-card tab-content hidden" id="content-chat">
+                <div class="chat-header">
+                    <h3>💬 Ask ScholarMind</h3>
+                    <p>Ask follow-up questions about your research topic</p>
+                </div>
+                <div class="chat-messages" id="chat-messages">
+                    <div class="chat-msg chat-ai">
+                        <div class="chat-avatar">🔬</div>
+                        <div class="chat-bubble">
+                            Hello! I've analyzed your research topic. Feel free to ask me any questions about the
+                            report, or explore related topics. I'll respond in the same language as your report.
+                        </div>
+                    </div>
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" id="chat-input" placeholder="Ask a question about your research..."
+                        onkeydown="if(event.key === 'Enter') sendChat()">
+                    <button class="chat-send-btn" onclick="sendChat()" id="chat-send-btn">
+                        <span>Send</span>
+                        <span class="send-arrow">→</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>ScholarMind &middot; AI-Powered Research Intelligence</p>
+        </footer>
+    </div>
+
+    <script>
+        // ── Loading animation ──────────────────────────────────────
+        const loadingMessages = [
+            "Searching the web for relevant sources...",
+            "Analyzing Wikipedia and research databases...",
+            "Extracting content from research papers...",
+            "Processing and cleaning data...",
+            "Running AI deep analysis...",
+            "Generating structured research report...",
+            "Building PDF document...",
+            "Creating interactive presentation...",
+            "Finalizing output...",
+        ];
+
+        let loadingInterval = null;
+        let progressInterval = null;
+        let stepInterval = null;
+
+        function animateLoading() {
+            let idx = 0;
+            let stepIdx = 1;
+            const statusEl = document.getElementById("loading-status");
+            const fillEl = document.getElementById("progress-fill");
+            let progress = 0;
+
+            loadingInterval = setInterval(() => {
+                idx = (idx + 1) % loadingMessages.length;
+                statusEl.textContent = loadingMessages[idx];
+            }, 3000);
+
+            progressInterval = setInterval(() => {
+                if (progress < 90) {
+                    progress += Math.random() * 2.5;
+                    fillEl.style.width = Math.min(progress, 90) + "%";
+                }
+            }, 500);
+
+            stepInterval = setInterval(() => {
+                if (stepIdx <= 5) {
+                    const prev = document.getElementById(`step-${stepIdx}`);
+                    if (prev) prev.classList.add("active");
+                    stepIdx++;
+                }
+            }, 8000);
+        }
+
+        function stopLoadingAnimation() {
+            clearInterval(loadingInterval);
+            clearInterval(progressInterval);
+            clearInterval(stepInterval);
+            document.getElementById("progress-fill").style.width = "100%";
+            for (let i = 1; i <= 5; i++) {
+                document.getElementById(`step-${i}`).classList.add("active");
+            }
+        }
+
+        // ── Tab Management ─────────────────────────────────────────
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            document.getElementById(`content-${tabName}`).classList.remove('hidden');
+        }
+
+        // ── UI State Management ────────────────────────────────────
+        function showSection(id) {
+            ["loading-section", "error-section", "results-section"].forEach(s => {
+                document.getElementById(s).classList.add("hidden");
+            });
+            if (id) document.getElementById(id).classList.remove("hidden");
+        }
+
+        function resetUI() {
+            showSection(null);
+            document.getElementById("topic-input").value = "";
+            document.getElementById("generate-btn").disabled = false;
+            for (let i = 1; i <= 5; i++) {
+                document.getElementById(`step-${i}`).classList.remove("active");
+            }
+            document.getElementById("step-1").classList.add("active");
+            document.getElementById("progress-fill").style.width = "0%";
+        }
+
+        // ── Markdown-to-HTML Renderer ──────────────────────────────
+        function renderMarkdown(text) {
+            let html = text;
+            html = html.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+            html = html.replace(/^#{1,2}\s*(\d+[\.\\)]\s*.+)$/gm, '<h2 class="report-heading">$1</h2>');
+            html = html.replace(/^###\s*(.+)$/gm, '<h3 class="report-subheading">$1</h3>');
+            html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+            html = html.replace(/(https?:\/\/[^\s<)]+)/g, '<a href="$1" target="_blank" rel="noopener" class="report-link">$1</a>');
+            html = html.replace(/^[\-\•\*]\s+(.+)$/gm, '<li class="report-bullet">$1</li>');
+            html = html.replace(/(<li class="report-bullet">.+?<\/li>\n?)+/g, (m) => `<ul class="report-list">${m}</ul>`);
+
+            html = html.replace(/^(\d+[\.\\)])\s+(.+)$/gm, (match, num, text) => {
+                if (match.includes('class="report-heading"')) return match;
+                return `<p class="report-numbered"><span class="num">${num}</span> ${text}</p>`;
+            });
+
+            html = html.replace(/^(?!<[huplad]|<li|<ul)(.+)$/gm, '<p class="report-text">$1</p>');
+            html = html.replace(/<p class="report-text">\s*<\/p>/g, '');
+            return html;
+        }
+
+        // ── Speech Renderer ────────────────────────────────────────
+        function renderSpeech(text) {
+            let html = text;
+            html = html.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+            html = html.replace(
+                /\[SLIDE\s*(\d+):\s*(.+?)\]\s*\(time:\s*(.+?)\)/gi,
+                '<div class="speech-slide-header"><span class="speech-slide-num">Slide $1</span><span class="speech-slide-title">$2</span><span class="speech-time">⏱ $3</span></div>'
+            );
+            html = html.replace(/\[Tip:\s*(.+?)\]/gi, '<div class="speech-tip">💡 $1</div>');
+            html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            html = html.replace(/^(?!<div|<strong)(.{10,})$/gm, '<p class="speech-paragraph">$1</p>');
+            return html;
+        }
+
+        // ── Source Links Renderer ──────────────────────────────────
+        function renderSources(sources) {
+            if (!sources || sources.length === 0) return '<p>No sources available.</p>';
+            let html = '';
+            sources.forEach((src, idx) => {
+                html += `
+                    <div class="source-item">
+                        <div class="source-num">${idx + 1}</div>
+                        <div class="source-info">
+                            <a href="${src.url}" target="_blank" rel="noopener" class="source-title">${src.title}</a>
+                            <span class="source-url">${src.url}</span>
+                            ${src.snippet ? `<p class="source-snippet">${src.snippet}</p>` : ''}
+                        </div>
+                        <a href="${src.url}" target="_blank" rel="noopener" class="source-link-btn">Open ↗</a>
+                    </div>
+                `;
+            });
+            return html;
+        }
+
+        // ── Main Generate Function ─────────────────────────────────
+        async function generateResearch() {
+            const topicInput = document.getElementById("topic-input");
+            const topic = topicInput.value.trim();
+            const language = document.getElementById("language-select").value;
+
+            if (!topic) {
+                topicInput.classList.add("shake");
+                setTimeout(() => topicInput.classList.remove("shake"), 500);
+                return;
+            }
+
+            document.getElementById("generate-btn").disabled = true;
+            showSection("loading-section");
+            animateLoading();
+
+            try {
+                const response = await fetch("/generate", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ topic, language }),
+                });
+
+                const data = await response.json();
+                stopLoadingAnimation();
+
+                if (!response.ok || data.error) {
+                    document.getElementById("error-message").textContent = data.error || "An unexpected error occurred.";
+                    showSection("error-section");
+                    document.getElementById("generate-btn").disabled = false;
+                    return;
+                }
+
+                // Render results
+                document.getElementById("result-topic").textContent = data.topic;
+                document.getElementById("result-language").textContent = `🌐 ${data.language}`;
+                document.getElementById("report-content").innerHTML = renderMarkdown(data.report);
+                document.getElementById("sources-list").innerHTML = renderSources(data.sources);
+
+                // Reset speech tab
+                document.getElementById("speech-content").innerHTML =
+                    '<div class="speech-placeholder"><span class="speech-placeholder-icon">🎙️</span><p>Click "Generate Speech" above to create a timed presentation script</p></div>';
+                document.getElementById("speech-download-wrap").classList.add("hidden");
+                document.getElementById("speech-btn-text").textContent = "Generate Speech";
+                document.getElementById("tts-controls").classList.add("hidden");
+                ttsStop();
+
+                // Reset chat
+                document.getElementById("chat-messages").innerHTML = `
+                    <div class="chat-msg chat-ai">
+                        <div class="chat-avatar">🔬</div>
+                        <div class="chat-bubble">
+                            I've analyzed the research on "<strong>${data.topic}</strong>". Ask me anything about the report!
+                        </div>
+                    </div>
+                `;
+
+                switchTab('report');
+                showSection("results-section");
+
+            } catch (err) {
+                stopLoadingAnimation();
+                document.getElementById("error-message").textContent = "Network error. Please check your connection and try again.";
+                showSection("error-section");
+            }
+
+            document.getElementById("generate-btn").disabled = false;
+        }
+
+        // ── Speech Generation ──────────────────────────────────────
+        let currentSpeechText = "";
+
+        async function generateSpeech() {
+            const btn = document.getElementById("speech-generate-btn");
+            const btnText = document.getElementById("speech-btn-text");
+            const duration = document.getElementById("speech-duration").value;
+
+            btn.disabled = true;
+            btnText.textContent = "Generating...";
+
+            try {
+                const response = await fetch("/generate-speech", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ duration: parseInt(duration) }),
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || data.error) {
+                    alert(data.error || "Failed to generate speech.");
+                    btn.disabled = false;
+                    btnText.textContent = "Generate Speech";
+                    return;
+                }
+
+                // Store raw text for TTS
+                currentSpeechText = data.speech;
+
+                // Render speech
+                document.getElementById("speech-content").innerHTML = renderSpeech(data.speech);
+                document.getElementById("speech-info").textContent = `${data.duration}-minute presentation speech script`;
+                document.getElementById("speech-download-wrap").classList.remove("hidden");
+                document.getElementById("tts-controls").classList.remove("hidden");
+                btnText.textContent = "✓ Speech Ready";
+
+                switchTab('speech');
+
+            } catch (err) {
+                alert("Network error generating speech.");
+            }
+
+            btn.disabled = false;
+        }
+
+        // ── Text-to-Speech (TTS) ───────────────────────────────────
+        let ttsUtterance = null;
+        let ttsIsPaused = false;
+        let ttsSpeaking = false;
+        let ttsChunks = [];
+        let ttsChunkIdx = 0;
+        let ttsKeepAlive = null;  // Chrome workaround timer
+        let ttsVoices = [];
+
+        // Language code mapping
+        const langMap = {
+            'Hindi': 'hi-IN', 'Marathi': 'mr-IN', 'Sanskrit': 'hi-IN',
+            'Tamil': 'ta-IN', 'Telugu': 'te-IN', 'Bengali': 'bn-IN',
+            'Gujarati': 'gu-IN', 'Kannada': 'kn-IN', 'Urdu': 'ur-PK',
+            'Malayalam': 'ml-IN', 'Punjabi': 'pa-IN', 'English': 'en-US',
+        };
+
+        // Pre-load voices (they load async in most browsers)
+        function loadVoices() {
+            ttsVoices = speechSynthesis.getVoices();
+            console.log("[TTS] Voices loaded:", ttsVoices.length);
+        }
+        if (speechSynthesis) {
+            loadVoices();
+            speechSynthesis.onvoiceschanged = loadVoices;
+        }
+
+        // Split text into small sentence-level chunks (max ~200 chars)
+        // Chrome has a bug where utterances > ~300 chars silently stop
+        function splitIntoChunks(text) {
+            // Split by sentence endings, newlines, colons, semicolons
+            const sentences = text.split(/(?<=[.!?\n;:])\s+/);
+            const chunks = [];
+            let current = "";
+
+            for (const sentence of sentences) {
+                if (current.length + sentence.length > 200 && current.length > 0) {
+                    chunks.push(current.trim());
+                    current = sentence;
+                } else {
+                    current += (current ? " " : "") + sentence;
+                }
+            }
+            if (current.trim()) chunks.push(current.trim());
+
+            // Filter out empty chunks
+            return chunks.filter(c => c.length > 0);
+        }
+
+        function ttsPlay() {
+            if (!currentSpeechText) {
+                alert("No speech text available. Generate a speech first.");
+                return;
+            }
+
+            // If paused, resume
+            if (ttsIsPaused && speechSynthesis.paused) {
+                speechSynthesis.resume();
+                ttsIsPaused = false;
+                document.getElementById("tts-play-icon").textContent = "⏸";
+                return;
+            }
+
+            // If already speaking, pause
+            if (ttsSpeaking && speechSynthesis.speaking) {
+                speechSynthesis.pause();
+                ttsIsPaused = true;
+                document.getElementById("tts-play-icon").textContent = "▶";
+                return;
+            }
+
+            // Start fresh
+            speechSynthesis.cancel();
+            ttsIsPaused = false;
+            ttsSpeaking = true;
+
+            // Clean the text for TTS
+            let cleanText = currentSpeechText;
+            cleanText = cleanText.replace(/\[SLIDE\s*\d+:\s*(.+?)\]\s*\(time:\s*.+?\)/gi, 'Slide: $1. ');
+            cleanText = cleanText.replace(/\[Tip:\s*(.+?)\]/gi, '$1. ');
+            cleanText = cleanText.replace(/\*\*(.+?)\*\*/g, '$1');
+            cleanText = cleanText.replace(/#{1,3}\s*/g, '');
+            cleanText = cleanText.replace(/---+/g, '');
+            cleanText = cleanText.replace(/\n{3,}/g, '\n\n');
+
+            // Split into small chunks for Chrome compatibility
+            ttsChunks = splitIntoChunks(cleanText);
+            ttsChunkIdx = 0;
+            console.log("[TTS] Total chunks:", ttsChunks.length);
+
+            document.getElementById("tts-play-icon").textContent = "⏸";
+            speakNextChunk();
+        }
+
+        function speakNextChunk() {
+            if (ttsChunkIdx >= ttsChunks.length || !ttsSpeaking) {
+                // Done speaking
+                ttsSpeaking = false;
+                ttsIsPaused = false;
+                document.getElementById("tts-play-icon").textContent = "▶";
+                clearInterval(ttsKeepAlive);
+                console.log("[TTS] Finished");
+                return;
+            }
+
+            const text = ttsChunks[ttsChunkIdx];
+            console.log(`[TTS] Chunk ${ttsChunkIdx + 1}/${ttsChunks.length}: "${text.substring(0, 50)}..."`);
+
+            ttsUtterance = new SpeechSynthesisUtterance(text);
+
+            // Set rate from slider
+            const rate = parseFloat(document.getElementById("tts-rate").value) || 1;
+            ttsUtterance.rate = rate;
+            ttsUtterance.pitch = 1;
+            ttsUtterance.volume = 1;
+
+            // Set language
+            const lang = document.getElementById("language-select").value;
+            const langCode = langMap[lang] || 'en-US';
+            ttsUtterance.lang = langCode;
+
+            // Find best matching voice
+            if (ttsVoices.length === 0) ttsVoices = speechSynthesis.getVoices();
+            const shortCode = langCode.split('-')[0];
+            const matchVoice = ttsVoices.find(v => v.lang === langCode)
+                || ttsVoices.find(v => v.lang.startsWith(shortCode))
+                || null;
+            if (matchVoice) {
+                ttsUtterance.voice = matchVoice;
+                console.log("[TTS] Using voice:", matchVoice.name, matchVoice.lang);
+            }
+
+            ttsUtterance.onend = () => {
+                ttsChunkIdx++;
+                speakNextChunk();
+            };
+
+            ttsUtterance.onerror = (e) => {
+                console.error("[TTS] Error:", e.error);
+                // Try next chunk on error
+                ttsChunkIdx++;
+                speakNextChunk();
+            };
+
+            speechSynthesis.speak(ttsUtterance);
+
+            // Chrome workaround: Chrome pauses speech after ~15s of inactivity
+            // Periodically resume to prevent silent death
+            clearInterval(ttsKeepAlive);
+            ttsKeepAlive = setInterval(() => {
+                if (speechSynthesis.speaking && !speechSynthesis.paused) {
+                    // Keep-alive: pause and resume to reset Chrome's timer
+                    speechSynthesis.pause();
+                    speechSynthesis.resume();
+                }
+            }, 10000);
+        }
+
+        function ttsPause() {
+            if (speechSynthesis.speaking && !speechSynthesis.paused) {
+                speechSynthesis.pause();
+                ttsIsPaused = true;
+                document.getElementById("tts-play-icon").textContent = "▶";
+            }
+        }
+
+        function ttsStop() {
+            speechSynthesis.cancel();
+            ttsIsPaused = false;
+            ttsSpeaking = false;
+            ttsChunkIdx = 0;
+            clearInterval(ttsKeepAlive);
+            const icon = document.getElementById("tts-play-icon");
+            if (icon) icon.textContent = "▶";
+        }
+
+        // Update rate display
+        document.addEventListener("DOMContentLoaded", () => {
+            const rateSlider = document.getElementById("tts-rate");
+            const rateDisplay = document.getElementById("tts-rate-display");
+            if (rateSlider) {
+                rateSlider.addEventListener("input", () => {
+                    rateDisplay.textContent = rateSlider.value + "x";
+                });
+            }
+        });
+
+        // ── AI Chat ────────────────────────────────────────────────
+        async function sendChat() {
+            const input = document.getElementById("chat-input");
+            const message = input.value.trim();
+            if (!message) return;
+
+            const messagesDiv = document.getElementById("chat-messages");
+            const sendBtn = document.getElementById("chat-send-btn");
+
+            // Add user message
+            messagesDiv.innerHTML += `
+                <div class="chat-msg chat-user">
+                    <div class="chat-bubble">${escapeHtml(message)}</div>
+                    <div class="chat-avatar">👤</div>
+                </div>
+            `;
+            input.value = "";
+            sendBtn.disabled = true;
+
+            // Add typing indicator
+            const typingId = 'typing-' + Date.now();
+            messagesDiv.innerHTML += `
+                <div class="chat-msg chat-ai" id="${typingId}">
+                    <div class="chat-avatar">🔬</div>
+                    <div class="chat-bubble chat-typing">
+                        <span class="typing-dot"></span>
+                        <span class="typing-dot"></span>
+                        <span class="typing-dot"></span>
+                    </div>
+                </div>
+            `;
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+            try {
+                const response = await fetch("/chat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ message }),
+                });
+
+                const data = await response.json();
+
+                // Remove typing indicator
+                const typingEl = document.getElementById(typingId);
+                if (typingEl) typingEl.remove();
+
+                if (!response.ok || data.error) {
+                    messagesDiv.innerHTML += `
+                        <div class="chat-msg chat-ai">
+                            <div class="chat-avatar">🔬</div>
+                            <div class="chat-bubble chat-error-bubble">${data.error || "Something went wrong."}</div>
+                        </div>
+                    `;
+                } else {
+                    const replyHtml = renderChatReply(data.reply);
+                    messagesDiv.innerHTML += `
+                        <div class="chat-msg chat-ai">
+                            <div class="chat-avatar">🔬</div>
+                            <div class="chat-bubble">${replyHtml}</div>
+                        </div>
+                    `;
+                }
+
+            } catch (err) {
+                const typingEl = document.getElementById(typingId);
+                if (typingEl) typingEl.remove();
+                messagesDiv.innerHTML += `
+                    <div class="chat-msg chat-ai">
+                        <div class="chat-avatar">🔬</div>
+                        <div class="chat-bubble chat-error-bubble">Network error. Please try again.</div>
+                    </div>
+                `;
+            }
+
+            sendBtn.disabled = false;
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            input.focus();
+        }
+
+        function renderChatReply(text) {
+            let html = escapeHtml(text);
+            html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+            html = html.replace(/^[\-\•]\s+(.+)$/gm, '<li>$1</li>');
+            html = html.replace(/(<li>.+?<\/li>\n?)+/g, (m) => `<ul class="chat-list">${m}</ul>`);
+            html = html.replace(/\n/g, '<br>');
+            return html;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ── Keyboard shortcuts & particles ─────────────────────────
+        document.addEventListener("DOMContentLoaded", () => {
+            document.getElementById("topic-input").addEventListener("keydown", (e) => {
+                if (e.key === "Enter") generateResearch();
+            });
+
+            // Load voices for TTS
+            if (speechSynthesis) {
+                speechSynthesis.getVoices();
+                speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
+            }
+
+            // Generate floating particles
+            const container = document.getElementById("particles");
+            for (let i = 0; i < 15; i++) {
+                const p = document.createElement("div");
+                p.className = "particle";
+                p.style.left = Math.random() * 100 + "%";
+                p.style.animationDuration = (8 + Math.random() * 12) + "s";
+                p.style.animationDelay = Math.random() * 8 + "s";
+                p.style.width = p.style.height = (1 + Math.random() * 3) + "px";
+                container.appendChild(p);
+            }
+        });
+    </script>
+</body>
+
+</html>

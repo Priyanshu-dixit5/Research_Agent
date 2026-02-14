@@ -1,0 +1,7 @@
+flask
+google-genai
+requests
+beautifulsoup4
+reportlab
+python-pptx
+python-dotenv
